@@ -10,7 +10,9 @@ langchain-google-genai==4.4.3
 google-genai==2.33.0
 
 # MCP (Model Context Protocol)
-mcp
+# mcp 2.x moved/removed `mcp.server.fastmcp` and breaks `detect_url/backend/mcp/server.py`.
+# Keep on the 1.x line so `FastMCP` and the client stdio APIs stay available.
+mcp<2.0.0
 
 # Web Scraping
 requests
