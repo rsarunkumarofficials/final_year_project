@@ -1,12 +1,13 @@
 # Core LLM + LangChain
-langchain
-langchain-core
-langchain-community
-langgraph
+# Pinned to the newest releases that still support Python 3.10 (Render runtime).
+langchain==1.4.10
+langchain-core==1.7.7
+langchain-community==0.4.2
+langgraph==1.2.24
 
 # Google Gemini LLM
-langchain-google-genai
-google-genai
+langchain-google-genai==4.4.3
+google-genai==2.33.0
 
 # MCP (Model Context Protocol)
 mcp
@@ -17,11 +18,15 @@ beautifulsoup4
 
 # Machine learning (trained URL phishing classifier)
 # The committed artifact in detect_url/ml/artifacts/ was retrained and saved
-# with exactly these versions. Keep them pinned: sklearn pickle format is not
-# forward/backward compatible and a mismatch changes predictions.
+# with scikit-learn 1.7.2 / numpy 1.26.4. Keep those pinned: sklearn pickle
+# format is not forward/backward compatible and a mismatch changes predictions.
+# pandas is pinned to 2.2.3 (not 3.0.x) because Render runs Python 3.10 and
+# pandas 3.x requires Python >= 3.11. scipy 1.15.3 is the newest build that
+# supports Python 3.10 and was used to validate the saved artifact.
 scikit-learn==1.7.2
 numpy==1.26.4
-pandas==3.0.2
+pandas==2.2.3
+scipy==1.15.3
 joblib==1.5.3
 
 # Database

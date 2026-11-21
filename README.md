@@ -105,7 +105,7 @@ extra numeric feature.
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.10+ (the pinned dependency set is verified on 3.10 and 3.11)
 - Node.js 18+
 - A Google Gemini API key (for the optional supporting-context layer)
 
