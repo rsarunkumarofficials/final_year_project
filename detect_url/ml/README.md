@@ -35,40 +35,41 @@ external sanity-check set of 21 real-world URLs (`probe.py`), not the test set.
 
 5-fold CV on training split (mean ± std F1):
 
-| Candidate | CV F1 | Held-out accuracy | Real-world probe errors |
+| Candidate | CV F1 | CV accuracy | Real-world probe errors |
 |---|---|---|---|
-| Majority baseline | 0.0000 | 50.0% | — |
-| Numeric GBM | 0.9089 ± 0.0043 | 90.90% | 3 / 21 |
-| Numeric RandomForest | 0.8952 ± 0.0032 | 90.20% | 3 / 21 |
-| Char TF-IDF + LogReg | 0.9276 ± 0.0031 | 93.66% | 2 / 21 |
-| Hybrid (numeric + char) | 0.9241 ± 0.0040 | 92.91% | 0 / 21 |
-| **Final ensemble (0.75 hybrid + 0.25 char)** | — | **93.22%** | **0 / 21** |
+| Majority baseline | 0.0000 | 50.01% | — |
+| Numeric GBM | 0.9089 ± 0.0043 | 90.88% ± 0.46% | — |
+| Numeric RandomForest | 0.8952 ± 0.0032 | 89.52% ± 0.29% | — |
+| Char TF-IDF + LogReg | 0.9278 ± 0.0044 | 92.87% ± 0.40% | — |
+| Hybrid (numeric + char) | 0.9243 ± 0.0041 | 92.53% ± 0.39% | — |
+| **Final ensemble (0.75 hybrid + 0.25 char)** | — | **93.13% held-out** | **0 / 21** |
 
-Why the ensemble: the pure char model scored highest on the test split but
-misclassified `accounts.google.com` (a dataset labelling artifact — see below)
-and `free-gift-card-win.xyz`. Adding 75% of the hybrid model fixed both while
-keeping accuracy within 0.44pp of the best candidate.
+Why the ensemble: the pure char model scored highest on the training CV but
+misclassifies `accounts.google.com` (a dataset labelling artifact — see below)
+in isolation. Adding 75% of the hybrid model fixes that while keeping held-out
+accuracy essentially unchanged.
 
 ## 4. Final held-out test results (2,286 unseen URLs)
 
 | Metric | Value |
 |---|---|
-| **Accuracy** | **93.22%** |
-| Precision (phishing) | 94.67% |
-| Recall (phishing) | 91.60% |
-| **F1** | **93.11%** |
+| **Accuracy** | **93.13%** |
+| Precision (phishing) | 94.58% |
+| Recall (phishing) | 91.51% |
+| **F1** | **93.02%** |
 | ROC-AUC | 98.35% |
 | Average precision | 98.57% |
-| False-positive rate | 5.16% |
-| False-negative rate | 8.40% |
+| False-positive rate | 5.25% |
+| False-negative rate | 8.49% |
 
-Confusion matrix `[[TN, FP], [FN, TP]]` = `[[1084, 59], [96, 1047]]`
+Confusion matrix `[[TN, FP], [FN, TP]]` = `[[1083, 60], [97, 1046]]`
 
-- 59 legitimate sites wrongly flagged (5.16%)
-- 96 phishing sites missed (8.40%)
+- 60 legitimate sites wrongly flagged (5.25%)
+- 97 phishing sites missed (8.49%)
 
-These are the **real** numbers. The old website's "96.8% accuracy" was hardcoded
-demo text and has been removed from the meta description.
+These are the **real** numbers, reproduced under the pinned scikit-learn 1.7.2
+environment. The old website's "96.8% accuracy" was hardcoded demo text and has
+been removed from the meta description.
 
 ## 5. How inference works
 
@@ -119,8 +120,7 @@ All 21 URLs in `probe.py` classified correctly.
 4. **Threshold is fixed at 0.5.** It balances FPR/FNR on this balanced dataset.
    A security product would tune it toward higher recall (fewer misses).
 5. **Not a deep model.** It is TF-IDF + logistic regression, deliberately chosen
-   for parity, speed and interpretability. The Three.js "neural network" visuals
-   are decorative and do not run inference.
+   for parity, speed and interpretability. No neural network runs inference.
 6. **Model size.** The artifact includes a ~118k-term char vocabulary (~several MB).
 
 ## 8. Files
@@ -131,8 +131,6 @@ All 21 URLs in `probe.py` classified correctly.
 | `train.py` | Full training, CV, evaluation, artifact + metrics export |
 | `inference.py` | Production prediction + model card |
 | `probe.py` | 21 real-world URL sanity checks |
-| `eda.py` | Dataset exploration |
-| `validate_parity.py` | Shows why dataset columns are not reused at inference |
-| `compare.py`, `ensemble_check.py` | Candidate/ensemble selection experiments (run `compare.py` first — it regenerates the candidate artifacts that `ensemble_check.py` loads) |
+| `verify.py` | Re-measures the saved artifact against the held-out split |
 | `artifacts/phishing_model.joblib` | Trained ensemble |
 | `artifacts/metrics.json` | Measured metrics and CV results |

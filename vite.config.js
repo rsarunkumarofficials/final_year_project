@@ -14,7 +14,8 @@ export default defineConfig({
   },
   build: {
     outDir: 'website',
-    emptyOutDir: false,
+    // Keep the build output free of stale hashed bundles from older builds.
+    emptyOutDir: true,
     assetsDir: 'assets',
     sourcemap: false,
   },

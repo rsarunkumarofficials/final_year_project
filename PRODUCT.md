@@ -29,9 +29,9 @@ Source of truth: `detect_url/ml/artifacts/metrics.json` and `GET /api/model`.
   Live prediction may report `features_used: 58`; the report renders the
   response value when present.
 - Data: **11,429** unique URLs → **9,143 train / 2,286 held-out test**.
-- Held-out: accuracy **93.22%**, precision **94.67%**, recall **91.60%**,
-  F1 **93.11%**, ROC-AUC **98.35%**, average precision **98.57%**.
-- Confusion matrix `[[1084, 59], [96, 1047]]` → FPR **5.16%**, FNR **8.40%**.
+- Held-out: accuracy **93.13%**, precision **94.58%**, recall **91.51%**,
+  F1 **93.02%**, ROC-AUC **98.35%**, average precision **98.57%**.
+- Confusion matrix `[[1083, 60], [97, 1046]]` → FPR **5.25%**, FNR **8.49%**.
 - Majority-class baseline: **50.00%**.
 - Verification: `verify.py` reproduces metrics from disk and matches inference
   within `1e-4`; `probe.py` passed 21/21 real-world URL checks.

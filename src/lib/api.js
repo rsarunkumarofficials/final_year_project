@@ -1,22 +1,47 @@
-export async function predictUrl(url, sessionId, signal) {
-  const response = await fetch('/api/predict', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url_or_prompt: url, session_id: sessionId }),
-    signal,
-  });
+// Relative by default so the same build works behind any host (FastAPI, nginx,
+// Render, etc.). Override with VITE_API_BASE_URL only when the API is separate.
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
-  let payload;
+export async function predictUrl(url, sessionId, signal) {
+  let response;
+
+  try {
+    response = await fetch(`${API_BASE}/api/predict`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url_or_prompt: url, session_id: sessionId }),
+      signal,
+    });
+  } catch (requestError) {
+    if (requestError.name === 'AbortError') throw requestError;
+    throw new Error('Cannot reach the analysis server. Check your connection and try again.');
+  }
+
+  // Parse defensively: a proxy or a crashed worker may return HTML/text.
+  let payload = null;
   try {
     payload = await response.json();
   } catch {
-    throw new Error('The server returned an unreadable response. Please try again.');
+    payload = null;
   }
 
-  if (!response.ok || payload.status === 'error') {
-    throw new Error(payload.message || `Request failed with status ${response.status}.`);
+  if (!response.ok) {
+    const message =
+      payload?.message ||
+      payload?.detail ||
+      (response.statusText
+        ? `Request failed (${response.status} ${response.statusText}).`
+        : `Request failed with status ${response.status}.`);
+    throw new Error(message);
   }
-  if (!payload.ml) {
+
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw new Error('The server returned an unreadable response. Please try again.');
+  }
+  if (payload.status === 'error') {
+    throw new Error(payload.message || 'The server reported an error. Please try again.');
+  }
+  if (!payload.ml || typeof payload.ml !== 'object') {
     throw new Error('The model did not return a verdict. Please try again.');
   }
 

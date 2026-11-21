@@ -81,6 +81,11 @@ export default function App() {
 
   const runScan = useCallback(
     async (rawValue) => {
+      // Cancel any in-flight scan first: a stale success must never overwrite
+      // a newer validation error or a newer result.
+      abortRef.current?.abort();
+      const controller = new AbortController();
+
       const url = normalizeUrl(rawValue);
       if (!url) {
         setError('Enter a valid http(s) URL or a bare domain such as example.com.');
@@ -91,8 +96,6 @@ export default function App() {
       setInput(url);
       setError('');
       setStatus('loading');
-      abortRef.current?.abort();
-      const controller = new AbortController();
       abortRef.current = controller;
 
       try {

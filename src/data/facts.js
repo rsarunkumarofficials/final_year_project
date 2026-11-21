@@ -6,10 +6,10 @@ export const MODEL_FACTS = {
   trainingRows: 11429,
   testRows: 2286,
   features: 57,
-  accuracy: 93.22,
-  precision: 94.67,
-  recall: 91.6,
-  f1: 93.11,
+  accuracy: 93.13,
+  precision: 94.58,
+  recall: 91.51,
+  f1: 93.02,
   rocAuc: 98.35,
 };
 

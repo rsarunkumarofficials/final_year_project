@@ -16,9 +16,13 @@ requests
 beautifulsoup4
 
 # Machine learning (trained URL phishing classifier)
-scikit-learn
-pandas
-joblib
+# The committed artifact in detect_url/ml/artifacts/ was retrained and saved
+# with exactly these versions. Keep them pinned: sklearn pickle format is not
+# forward/backward compatible and a mismatch changes predictions.
+scikit-learn==1.7.2
+numpy==1.26.4
+pandas==3.0.2
+joblib==1.5.3
 
 # Database
 sqlalchemy

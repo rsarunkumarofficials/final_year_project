@@ -97,5 +97,5 @@ are not verified here.
 - Zero horizontal overflow at 1440 / 1024 / 820 / 768 / 390 / 320 and zero console errors.
 - Blur appears only on the visible navigation bar at every width.
 - Six regions, no numbered headings, no Instagram artifacts, no Known Limitations text.
-- `google.com` → SAFE `0.64%`, confidence `99.4%`, threshold `0.50`, 6 signals.
-- Phishing sample → PHISHING `99.98%`; report class switches to `is-risk`.
+- `google.com` → SAFE `0.67%`, confidence `99.3%`, threshold `0.50`, 6 signals.
+- Phishing sample → PHISHING `99.97%`; report class switches to `is-risk`.

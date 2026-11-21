@@ -21,6 +21,7 @@ from datetime import datetime, timezone
 import joblib
 import numpy as np
 import pandas as pd
+import sklearn
 from sklearn.compose import ColumnTransformer
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
@@ -202,6 +203,9 @@ def main():
         "models": {name: {"pipeline": pipe, "columns": cols} for name, (pipe, cols) in final_models.items()},
         "weights": FINAL_WEIGHTS,
         "numeric_features": numeric_cols,
+        # Stamped at save time so loaders can detect a version mismatch before
+        # sklearn emits InconsistentVersionWarning (which changes predictions).
+        "sklearn_version": sklearn.__version__,
     }, model_path)
 
     metadata = {
