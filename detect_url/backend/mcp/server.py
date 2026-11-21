@@ -2,11 +2,13 @@ import sqlite3
 import os
 import glob
 import json
+import ipaddress
+import socket
+from urllib.parse import urlparse
+
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from bs4 import BeautifulSoup
 from mcp.server.fastmcp import FastMCP
 
@@ -16,8 +18,24 @@ from mcp.server.fastmcp import FastMCP
 LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "server.log")
 
 def log(msg):
-    with open(LOG_FILE, "a") as f:
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(str(msg) + "\n")
+
+
+def is_public_url(url: str) -> bool:
+    """Reject localhost / private / link-local targets (SSRF guard)."""
+    try:
+        host = (urlparse(url).hostname or "").lower()
+    except ValueError:
+        return False
+    if not host or host in ("localhost", "::1"):
+        return False
+    try:
+        ip = ipaddress.ip_address(socket.gethostbyname(host))
+    except (socket.gaierror, ValueError):
+        return False
+    return not (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved)
+
 
 # ------------------------------------------------------------------ #
 #                        MCP SERVER                                    #
@@ -27,7 +45,7 @@ mcp = FastMCP('web_scraper_server')
 DB_DIRECTORY = os.environ.get("DB_DIRECTORY", ".")
 
 def get_db_path(db_name: str) -> str:
-    if ".." in db_name:
+    if os.path.basename(db_name) != db_name or not db_name.endswith(".db"):
         raise ValueError("Invalid DB name")
     return os.path.join(DB_DIRECTORY, db_name)
 
@@ -170,17 +188,41 @@ def _analyze_security(scraped: dict) -> dict:
         reasons.append("No meta description found.")
 
     # --- risk level ---
-    risk_score = len(suspicious_hits) + suspicious_link_count + (len(url_hits) * 3)
-    if risk_score == 0:
+    # Trusted hosts must not be penalised for generic words such as
+    # "account", "support" or "secure" appearing in their URL.
+    trusted_hosts = (
+        "google.com", "microsoft.com", "github.com", "mozilla.org",
+        "wikipedia.org", "stackoverflow.com", "python.org", "apple.com",
+    )
+    host = (urlparse(url).hostname or "").lower()
+    is_trusted = any(host == h or host.endswith("." + h) for h in trusted_hosts)
+
+    content_score = len(suspicious_hits) + min(suspicious_link_count, 3)
+    url_score = 0 if is_trusted else len(url_hits)
+
+    if content_score == 0 and url_score < 3:
         risk_level = "Safe"
-    elif risk_score <= 2:
+    elif content_score == 0 and url_score == 3:
+        risk_level = "Suspicious"
+        reasons.append("URL has 3 deceptive keywords but the page content is clean.")
+    elif content_score == 0:
+        risk_level = "High Risk - Danger/Phishing/Malware"
+        reasons.append(
+            f"URL contains {url_score} deceptive keywords with no legitimate page content."
+        )
+    elif content_score <= 2 and url_score <= 1:
         risk_level = "Suspicious"
         reasons.append("Low number of risk indicators detected.")
     else:
         risk_level = "High Risk - Danger/Phishing/Malware"
-        reasons.append(f"High number of risk indicators ({risk_score}) detected across content, links, and URL structure.")
-        if url_hits:
-            reasons.append(f"URL itself contains highly suspicious deceptive patterns: {', '.join(url_hits)}.")
+        reasons.append(
+            f"High number of risk indicators (content={content_score}, url={url_score}) "
+            "detected across content, links, and URL structure."
+        )
+        if url_hits and not is_trusted:
+            reasons.append(
+                f"URL itself contains highly suspicious deceptive patterns: {', '.join(url_hits)}."
+            )
 
     # --- summary ---
     summary = (
@@ -210,6 +252,15 @@ def scrape_website(url: str) -> str:
     Extracts title, headings, paragraphs, meta description, and links.
     Returns a JSON string with the analysis results.
     """
+    if not is_public_url(url):
+        return json.dumps({
+            "url": url,
+            "error": "Only public http(s) URLs can be scanned.",
+            "risk_level": "Unknown (Blocked)",
+            "category": "Unknown",
+            "reasons": ["Private or local addresses cannot be scanned."],
+        }, indent=2)
+
     try:
         headers = {
             "User-Agent": (
@@ -224,11 +275,11 @@ def scrape_website(url: str) -> str:
         session.mount('http://', adapter)
         session.mount('https://', adapter)
 
-        res = session.get(url, timeout=15, headers=headers, verify=False)
+        res = session.get(url, timeout=15, headers=headers)
         if res.status_code == 403:
             # Simple fallback for 403 Forbidden
             headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
-            res = session.get(url, timeout=15, headers=headers, verify=False)
+            res = session.get(url, timeout=15, headers=headers)
         res.raise_for_status()
         soup = BeautifulSoup(res.text, "html.parser")
 

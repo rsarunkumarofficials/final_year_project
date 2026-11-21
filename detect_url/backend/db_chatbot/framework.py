@@ -8,8 +8,8 @@ from langgraph.prebuilt import create_react_agent
 from langchain_core.tools import StructuredTool
 from langchain_community.chat_message_histories import SQLChatMessageHistory
 
-from backend.client import run_scrape_sync, run_query_sync, run_list_tables_sync, run_list_databases_sync
-from backend.llm import get_llm
+from ..client import run_scrape_sync, run_query_sync, run_list_tables_sync, run_list_databases_sync
+from ..llm import get_llm
 
 
 class DatabaseChatbot:
@@ -18,7 +18,7 @@ class DatabaseChatbot:
     stores results in SQLite, and answers questions using stored data.
     """
 
-    def __init__(self, db_directory: str, model_name: str = "claude-3-5-sonnet-latest"):
+    def __init__(self, db_directory: str, model_name: str = "gemini-3.8-flash"):
         self.db_directory = os.path.abspath(db_directory)
         os.makedirs(self.db_directory, exist_ok=True)
 

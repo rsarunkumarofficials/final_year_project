@@ -1,49 +1,52 @@
+"""CLI helper for querying stored website analyses.
+
+A thin, working alternative to backend/main.py. Kept for compatibility with
+older commands; it uses the same DatabaseChatbot as the web API.
+"""
 import os
 import sys
-from db_chatbot import DatabaseChatbot
+
+# Running this file directly puts backend/ on sys.path, not the project root.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
+from detect_url.backend.db_chatbot import DatabaseChatbot
+
 
 def main():
-    print("=== Integrated Object Detection Chatbot ===")
-    
-    # Point to the central databases folder
-    databases_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "databases"))
-    
-    if not os.path.exists(databases_folder):
-        os.makedirs(databases_folder, exist_ok=True)
-            
-    print(f"\nInitializing chatbot with databases from: {databases_folder}...")
-    
+    print("=" * 55)
+    print("   Web Intelligence Assistant - stored detections")
+    print("=" * 55)
+
+    db_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "db"))
+    os.makedirs(db_dir, exist_ok=True)
+
     try:
-        # Initialize the chatbot framework pointing to our databases directory
-        # The model name is kept consistent with the original project
-        bot = DatabaseChatbot(db_directory=databases_folder, model_name="gpt-oss:120b-cloud")
-        
-        session_id = input("ENTER YOUR SESSION ID (or press Enter for 'default'): ").strip() or "default"
-        
-        print("\nChatbot Ready! You can ask about the objects detected in the video.")
-        print("Example: 'What objects were detected?' or 'How many cars were moving fast?'")
-        print("Type 'exit' to quit.")
-        
-        while True:
-            query = input(f"\n[{session_id}] YOU: ").strip()
-            
-            if query.lower() == 'exit':
-                print("Exiting. Goodbye!")
-                break
-                
-            if not query:
-                continue
-                
-            try:
-                response = bot.chat(query, session_id)
-                print(f"AI: {response}")
-            except Exception as e:
-                print(f"Error during chat: {e}")
-                
-    except Exception as e:
-        print(f"Failed to initialize chatbot: {e}")
-        import traceback
-        traceback.print_exc()
+        bot = DatabaseChatbot(db_directory=db_dir)
+    except Exception as exc:
+        print(f"Failed to initialise: {exc}")
+        return
+
+    session_id = input("Enter session ID (or press Enter for 'default'): ").strip() or "default"
+
+    print(f"\nReady. Session: {session_id}")
+    print("Paste a URL to analyse it, or ask a question. Type 'exit' to quit.")
+
+    while True:
+        try:
+            query = input(f"\n[{session_id}] You: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nGoodbye!")
+            break
+        if not query:
+            continue
+        if query.lower() == "exit":
+            print("Goodbye!")
+            break
+        try:
+            print(f"\nAI: {bot.chat(query, session_id)}")
+        except Exception as exc:
+            print(f"\nError: {exc}")
+
 
 if __name__ == "__main__":
     main()

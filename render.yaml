@@ -1,13 +1,13 @@
 services:
   - type: web
-    name: phishguard-ai
+    name: url-checker
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn -k uvicorn.workers.UvicornWorker detect_url.backend.app:app
     envVars:
-      - key: ANTHROPIC_API_KEY
-        sync: false # User must set this in the Render dashboard
+      - key: GEMINI_API_KEY
+        sync: false # Set this in the Render dashboard; never commit the key
       - key: PYTHON_VERSION
-        value: 3.10.0
+        value: 3.11.0
       - key: PYTHONPATH
         value: .:detect_url

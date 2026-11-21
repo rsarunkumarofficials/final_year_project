@@ -4,8 +4,9 @@ langchain-core
 langchain-community
 langgraph
 
-# Anthropic LLM
-langchain-anthropic
+# Google Gemini LLM
+langchain-google-genai
+google-genai
 
 # MCP (Model Context Protocol)
 mcp
@@ -13,6 +14,11 @@ mcp
 # Web Scraping
 requests
 beautifulsoup4
+
+# Machine learning (trained URL phishing classifier)
+scikit-learn
+pandas
+joblib
 
 # Database
 sqlalchemy
@@ -28,6 +34,5 @@ python-dotenv
 pydantic
 typing-extensions
 fastapi
-uvicorn
 gunicorn
 uvicorn[standard]

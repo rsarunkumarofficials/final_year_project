@@ -1,14 +1,21 @@
 import os
-from langchain_anthropic import ChatAnthropic
 
-def get_llm(model: str = "claude-3-5-sonnet-latest", **kwargs):
-    """Return a ChatAnthropic LLM instance."""
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+
+def get_llm(model: str = "gemini-3.8-flash", **kwargs):
+    """Return a Gemini chat model for the LangGraph assistant."""
+    api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        print("⚠️  WARNING: ANTHROPIC_API_KEY environment variable is not set!")
+        raise RuntimeError(
+            "GEMINI_API_KEY is not set. Copy .env.example to .env and add your key, "
+            "or set the environment variable before starting."
+        )
 
-    return ChatAnthropic(
-        model_name=model,
-        anthropic_api_key=api_key,
+    return ChatGoogleGenerativeAI(
+        model=model,
+        api_key=api_key,
         temperature=0,
+        retries=1,
+        request_timeout=30,
     )

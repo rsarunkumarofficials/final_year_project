@@ -1,6 +1,10 @@
 import os
 import sys
 
+# Windows consoles default to cp1252; force UTF-8 before any emoji output.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 # Add the project root to sys.path so 'backend.db_chatbot' imports work when run directly
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
